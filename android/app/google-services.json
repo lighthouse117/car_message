@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1046979748296",
+    "project_id": "car-message-50c68",
+    "storage_bucket": "car-message-50c68.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1046979748296:android:5859c23062e16b5c2960fd",
+        "android_client_info": {
+          "package_name": "com.iii.carmessage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1046979748296-b228kktdqgtjka67bejff81jo5ppbl72.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhsRYA0iPf0NQjs7xmuZjoV9O2wu9RMR8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1046979748296-b228kktdqgtjka67bejff81jo5ppbl72.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1046979748296-m19jr0c5m2r8ujed4g5qk03bgpu6mhip.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iii.carmessage"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
