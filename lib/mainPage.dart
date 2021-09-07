@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:device_info/device_info.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -18,6 +20,14 @@ class _MainPageState extends State<MainPage> {
 
   String? prefecture;
   String? city;
+
+  late String uniqueID;
+
+  @override
+  void initState() {
+    super.initState();
+    getUqniqueID();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +120,10 @@ class _MainPageState extends State<MainPage> {
                         itemCount: docs.length,
                         itemBuilder: (BuildContext context, int index) {
                           DocumentSnapshot data = docs[index];
-                          getAddressFromLatlng(data["LatLng"].latitude,
-                                  data["LatLng"].longitude)
+                          bool isMyMessage = data["id"] == uniqueID;
+
+                          getAddressFromLatLng(data["latLng"].latitude,
+                                  data["latLng"].longitude)
                               .then((placemark) {
                             setState(() {
                               prefecture = placemark.administrativeArea;
@@ -128,7 +140,9 @@ class _MainPageState extends State<MainPage> {
                             height: 90,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
-                              color: Colors.grey[700],
+                              color: isMyMessage
+                                  ? Colors.orange[200]!.withOpacity(0.3)
+                                  : Colors.grey[700],
                             ),
                             child: Container(
                               margin: EdgeInsets.only(
@@ -169,11 +183,11 @@ class _MainPageState extends State<MainPage> {
                                         ),
                                       ),
                                       Text(
-                                        data["LatLng"]
+                                        data["latLng"]
                                                 .latitude
                                                 .toStringAsFixed(4) +
                                             ",  " +
-                                            data["LatLng"]
+                                            data["latLng"]
                                                 .longitude
                                                 .toStringAsFixed(4),
                                         style: TextStyle(
@@ -218,15 +232,32 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Future<Placemark> getAddressFromLatlng(double lat, double lng) async {
+  Future<Placemark> getAddressFromLatLng(double lat, double lng) async {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(lat, lng, localeIdentifier: "ja_JP");
     return placemarks[0];
   }
 
+  Future<void> getUqniqueID() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String id = "";
+
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      id = androidInfo.androidId;
+    } else if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      id = iosInfo.identifierForVendor;
+    }
+    uniqueID = id;
+  }
+
   void sendMyLocation() async {
+    var now = DateTime.now();
+
     bool serviceEnabled;
     LocationPermission permission;
+
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return Future.error('Location services are disabled.');
@@ -249,15 +280,15 @@ class _MainPageState extends State<MainPage> {
         desiredAccuracy: LocationAccuracy.high);
 
     Placemark placemark =
-        await getAddressFromLatlng(position.latitude, position.longitude);
+        await getAddressFromLatLng(position.latitude, position.longitude);
     String? prefecture = placemark.administrativeArea;
     String? city = placemark.locality;
 
-    var now = DateTime.now();
     await FirebaseFirestore.instance.collection('test').add({
       'sentAt': now,
-      'LatLng': GeoPoint(position.latitude, position.longitude),
+      'latLng': GeoPoint(position.latitude, position.longitude),
       'area': prefecture! + city!,
+      'id': uniqueID,
     });
   }
 }
