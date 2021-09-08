@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:device_info/device_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -17,8 +19,9 @@ class _MainPageState extends State<MainPage> {
   // Firebaseからのストリーム
   late Stream<QuerySnapshot> _testStream;
 
-  String? prefecture; // 都道府県
-  String? city; // 市町村
+  double currentLat = 0;
+  double currentLng = 0;
+  double currentSpeed = 0;
 
   late String myUniqueID; //　固有ID
 
@@ -29,6 +32,7 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    getLocationUpdates(); // 現在地情報を常に取得する
     getUqniqueID(); // デバイスごとの固有IDを取得
     var initialTime = DateTime.now(); // アプリ起動時の時刻
 
@@ -84,13 +88,12 @@ class _MainPageState extends State<MainPage> {
                     height: deviceHeight,
                   ),
                   Positioned(
-                    top: 20,
+                    top: 15,
                     child: Column(
                       children: [
                         Container(
                           child: Text(
-                            // "57",
-                            testText,
+                            currentSpeed.toStringAsFixed(6),
                             style: TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.w500,
@@ -99,7 +102,7 @@ class _MainPageState extends State<MainPage> {
                         ),
                         Container(
                           child: Text(
-                            "km/h",
+                            "m/h",
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 12,
@@ -108,16 +111,54 @@ class _MainPageState extends State<MainPage> {
                             ),
                           ),
                         ),
+                        // Text(lat.toString()),
+                        // Text(lng.toString()),
                       ],
                     ),
                   ),
                   Positioned(
-                    top: 100,
+                    top: 70,
+                    left: 15,
+                    child: Column(
+                      children: [
+                        Text(
+                          "現在地",
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          "緯度 " + currentLat.toString(),
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          "経度 " + currentLng.toString(),
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 110,
                     child: Container(
                       child: Image.asset(
                         'assets/mycar.png',
                         height: 140,
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 120,
+                    right: 30,
+                    child: SvgPicture.asset(
+                      "assets/car-top.svg",
+                      color: Colors.white.withOpacity(0.2),
+                      height: 100,
                     ),
                   ),
                   // 位置情報を送信するボタン
@@ -143,7 +184,7 @@ class _MainPageState extends State<MainPage> {
                     ),
                   ),
                   Positioned(
-                    top: 340,
+                    top: 360,
                     // Firebaseのデータが更新されるたび再描画される
                     child: Container(
                       color: Colors.grey[800],
@@ -290,51 +331,20 @@ class _MainPageState extends State<MainPage> {
     var now = DateTime.now();
 
     // 現在地を取得
-    Position currentPos = await getCurrentPosition();
+    // Position currentPos = await getCurrentPosition();
 
     // 緯度経度から住所を取得
-    Placemark placemark =
-        await getAddressFromLatLng(currentPos.latitude, currentPos.longitude);
+    Placemark placemark = await getAddressFromLatLng(currentLat, currentLng);
     String? prefecture = placemark.administrativeArea; // 都道府県名
     String? city = placemark.locality; // 市区町村名
 
     // Firebaseに投稿する
     await FirebaseFirestore.instance.collection('test').add({
       'sentAt': now, // 送信日時
-      'latLng':
-          GeoPoint(currentPos.latitude, currentPos.longitude), // 現在地（緯度経度）
+      'latLng': GeoPoint(currentLat, currentLng), // 現在地（緯度経度）
       'area': prefecture! + city!, // 住所
       'uid': myUniqueID, // 固有ID
     });
-  }
-
-  // 現在地を取得して返す
-  Future<Position> getCurrentPosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // 位置情報の許可関連
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    // 現在地を取得
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    return position;
   }
 
   // 新規メッセージをダイアログで表示
@@ -343,26 +353,22 @@ class _MainPageState extends State<MainPage> {
     bool isRead = prefs.getBool("showOnBoarding") ?? false;
 
     // 現在地を取得
-    Position currentPos = await getCurrentPosition();
-    double currentLat = currentPos.latitude;
-    double currentLng = currentPos.longitude;
+    double lat = currentLat;
+    double lng = currentLng;
 
     for (Map message in newMessages) {
       // 自分のメッセージ以外を表示
       if (message["uid"] != myUniqueID) {
         // 現在地からの距離を計算
         double distanceFromHere = Geolocator.distanceBetween(
-            currentPos.latitude,
-            currentPos.longitude,
-            message['latLng'].latitude,
-            message['latLng'].longitude);
+            lat, lng, message['latLng'].latitude, message['latLng'].longitude);
 
         Future.delayed(Duration.zero, () {
           showDialog(
             context: context,
             builder: (_) {
               return AlertDialog(
-                title: Text("新規メッセージ"),
+                title: Text("新規メッセージを検知"),
                 content: Column(children: [
                   Text(DateFormat('M月d日 HH:mm')
                       .format(message["sentAt"].toDate())),
@@ -387,5 +393,41 @@ class _MainPageState extends State<MainPage> {
         });
       }
     }
+  }
+
+  void getLocationUpdates() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 位置情報の許可関連
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // 現在地を常に取得するストリーム
+    StreamSubscription postionStream = Geolocator.getPositionStream(
+            desiredAccuracy: LocationAccuracy.bestForNavigation,
+            distanceFilter: 1)
+        .listen((Position position) {
+      // 現在地に変更があると実行される
+      setState(() {
+        currentLat = position.latitude;
+        currentLng = position.longitude;
+        currentSpeed = position.speed;
+      });
+    });
   }
 }
