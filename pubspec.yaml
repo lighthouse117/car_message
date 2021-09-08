@@ -30,6 +30,7 @@ dependencies:
   geolocator: ^7.6.0
   geocoding: ^2.0.1
   device_info: ^2.0.2
+  shared_preferences: ^2.0.6
 
 
 
