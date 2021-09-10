@@ -28,6 +28,15 @@ class _MainPageState extends State<MainPage> {
 
   List newMessages = []; // 新規メッセージのリスト
 
+  double _sheetHeight = 0; // バナーの高さ
+  double _defaultSheetTop = 900; // バナーの隠す位置
+  double _currentSheetTop = 0; // バナーの現在位置
+
+  String messageText = "";
+  String messageDistance = "";
+
+  Color _carColor = Colors.white.withOpacity(0.2);
+
 // 最初に一度だけ実行される初期化処理
   @override
   void initState() {
@@ -43,6 +52,9 @@ class _MainPageState extends State<MainPage> {
         .where("sentAt", isGreaterThan: initialTime)
         .orderBy("sentAt", descending: true)
         .snapshots();
+
+    _currentSheetTop = _defaultSheetTop;
+    // Future.delayed(Duration(milliseconds: 1000), _showMessageSheet);
   }
 
   @override
@@ -55,6 +67,8 @@ class _MainPageState extends State<MainPage> {
     final double deviceWidth = MediaQuery.of(context).size.width; // デバイスの幅
     final double deviceHeight = MediaQuery.of(context).size.height; // デバイスの高さ
     final double topPadding = MediaQuery.of(context).padding.top; // 上の余白
+
+    _sheetHeight = deviceHeight - 440 + 10;
 
     return Scaffold(
       body: Center(
@@ -69,6 +83,7 @@ class _MainPageState extends State<MainPage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return CircularProgressIndicator();
             }
+
             // 変更されたメッセージを取得（新規追加含む）
             newMessages = snapshot.data!.docChanges.map((change) {
               // ドキュメントIDも含めてマップにしてリストに格納
@@ -105,8 +120,8 @@ class _MainPageState extends State<MainPage> {
                     children: [
                       Container(
                         child: Text(
-                          // currentSpeed.toStringAsFixed(6),
-                          "56",
+                          currentSpeed.toStringAsFixed(4),
+                          // "56",
                           style: GoogleFonts.montserrat(
                             fontSize: 40,
                             fontWeight: FontWeight.w400,
@@ -116,7 +131,8 @@ class _MainPageState extends State<MainPage> {
                       ),
                       Container(
                         child: Text(
-                          "km/h",
+                          "m/s",
+                          // "km/h",
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
@@ -238,7 +254,7 @@ class _MainPageState extends State<MainPage> {
                   child: GestureDetector(
                     child: SvgPicture.asset(
                       "assets/car-top.svg",
-                      color: Colors.white.withOpacity(0.2),
+                      color: _carColor,
                       height: 90,
                     ),
                     onTap: () {
@@ -327,13 +343,14 @@ class _MainPageState extends State<MainPage> {
                         height: 90,
                       ),
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return SendMessagePage();
-                            },
-                          ),
-                        );
+                        // Navigator.of(context).push(
+                        //   MaterialPageRoute(
+                        //     builder: (context) {
+                        //       return SendMessagePage();
+                        //     },
+                        //   ),
+                        // );
+                        sendMyLocation();
                       },
                     ),
                   ),
@@ -389,190 +406,13 @@ class _MainPageState extends State<MainPage> {
                     ],
                   ),
                 ),
-                Positioned(
-                  top: 440,
-                  child: Container(
-                    height: deviceHeight - 440 + 10,
-                    width: deviceWidth,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(50),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFF414954),
-                          Color(0xFF202326),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: Color(0xFF47515B),
-                        width: 3,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          margin: EdgeInsets.only(top: 15, left: 30),
-                          child: Text(
-                            "前の車からのメッセージ",
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white54,
-                            ),
-                          ),
-                        ),
-                        Center(
-                          child: Container(
-                            margin: EdgeInsets.only(top: 10),
-                            child: Text(
-                              "ありがとう",
-                              style: TextStyle(
-                                fontSize: 23,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Center(
-                          child: Container(
-                            margin: EdgeInsets.only(top: 15),
-                            child: SvgPicture.asset(
-                              "assets/thanks_hands.svg",
-                              color: Color(0xFFA5B2C6),
-                              height: 100,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(
-                            top: 25,
-                            left: 25,
-                            right: 25,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // 通報ボタン
-                              Container(
-                                height: 60,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white12,
-                                        blurRadius: 30,
-                                        offset: Offset(-7, -7),
-                                      ),
-                                    ],
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFF343A41),
-                                        Color(0xFF171B20),
-                                      ],
-                                    )),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    primary: Colors.transparent,
-                                    shape: CircleBorder(),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {},
-                                  child: Icon(
-                                    Icons.report_rounded,
-                                    size: 30,
-                                    color: Colors.white54,
-                                  ),
-                                ),
-                              ),
-                              // SizedBox(width: 20),
-                              // いいねボタン
-                              Container(
-                                height: 60,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white12,
-                                        blurRadius: 30,
-                                        offset: Offset(-7, -7),
-                                      ),
-                                    ],
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFFF66B84),
-                                        Color(0xFFB43148),
-                                      ],
-                                    )),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    primary: Colors.transparent,
-                                    shape: CircleBorder(),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {},
-                                  child: Icon(
-                                    Icons.favorite_rounded,
-                                    size: 30,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              // SizedBox(width: 20),
-                              // OKボタン
-                              Container(
-                                height: 60,
-                                width: 160,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(60),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white12,
-                                        blurRadius: 30,
-                                        offset: Offset(-7, -7),
-                                      ),
-                                    ],
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color(0xFF1DA1EB),
-                                        Color(0xFF0A5A86),
-                                      ],
-                                    )),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    primary: Colors.transparent,
-                                    shape: CircleBorder(),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {},
-                                  child: Text(
-                                    "OK",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
+                // 受信したメッセージを下部に表示
+                AnimatedPositioned(
+                  top: _currentSheetTop,
+                  duration: Duration(milliseconds: 800),
+                  curve: Curves.easeInOut,
+                  child: buildMessageSheet(deviceHeight, deviceWidth),
+                ),
               ],
             );
           },
@@ -625,51 +465,59 @@ class _MainPageState extends State<MainPage> {
   // 新規メッセージをダイアログで表示
   void showMessage() async {
     final prefs = await SharedPreferences.getInstance();
-    bool isRead = prefs.getBool("showOnBoarding") ?? false;
+    bool isRead = prefs.getBool(newMessages[0]["docId"]) ?? false;
 
-    // 現在地を取得
-    double lat = currentLat;
-    double lng = currentLng;
+    Map message = newMessages[0];
 
-    for (Map message in newMessages) {
+    if (!isRead) {
       // 自分のメッセージ以外を表示
       if (message["uid"] != myUniqueID) {
+        // 現在地を取得
+        double lat = currentLat;
+        double lng = currentLng;
+
         // 現在地からの距離を計算
         double distanceFromHere = Geolocator.distanceBetween(
             lat, lng, message['latLng'].latitude, message['latLng'].longitude);
 
+        messageText = message["docId"];
+        messageDistance = distanceFromHere.toStringAsFixed(2);
+
         Future.delayed(Duration.zero, () {
-          showDialog(
-            context: context,
-            builder: (_) {
-              return AlertDialog(
-                title: Text("新規メッセージを検知"),
-                content: Column(children: [
-                  Text(DateFormat('M月d日 HH:mm')
-                      .format(message["sentAt"].toDate())),
-                  Text(message["docId"]),
-                  Text(message["latLng"].latitude.toString()),
-                  Text(message["latLng"].longitude.toString()),
-                  Text(currentLat.toString()),
-                  Text(currentLng.toString()),
-                  Text(distanceFromHere.toString()),
-                ]),
-                actions: [
-                  SimpleDialogOption(
-                    child: Text('OK'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              );
-            },
-          );
+          // showDialog(
+          //   context: context,
+          //   builder: (_) {
+          //     return AlertDialog(
+          //       title: Text("新規メッセージを検知"),
+          //       content: Column(children: [
+          //         Text(DateFormat('M月d日 HH:mm')
+          //             .format(message["sentAt"].toDate())),
+          //         Text(message["docId"]),
+          //         Text(message["latLng"].latitude.toString()),
+          //         Text(message["latLng"].longitude.toString()),
+          //         Text(currentLat.toString()),
+          //         Text(currentLng.toString()),
+          //         Text(distanceFromHere.toString()),
+          //       ]),
+          //       actions: [
+          //         SimpleDialogOption(
+          //           child: Text('OK'),
+          //           onPressed: () {
+          //             Navigator.pop(context);
+          //           },
+          //         ),
+          //       ],
+          //     );
+          //   },
+          // );
+          _showMessageSheet();
+          prefs.setBool(message["docId"], true);
         });
       }
     }
   }
 
+  // 位置情報を常に監視して取得する
   void getLocationUpdates() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -703,6 +551,232 @@ class _MainPageState extends State<MainPage> {
         currentLng = position.longitude; // 経度を更新
         currentSpeed = position.speed; // 速度を更新 (m/s)
       });
+    });
+  }
+
+  // 下部に表示されるメッセージ
+  Widget buildMessageSheet(double deviceHeight, double deviceWidth) {
+    return Container(
+      height: _sheetHeight,
+      width: deviceWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(50),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF414954),
+            Color(0xFF202326),
+          ],
+        ),
+        border: Border.all(
+          color: Color(0xFF47515B),
+          width: 3,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.only(top: 15, left: 30),
+            child: Text(
+              "前の車からのメッセージ",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.only(left: 30),
+            child: Text(
+              messageDistance + "m",
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.only(left: 30),
+            child: Text(
+              messageText,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              margin: EdgeInsets.only(top: 10),
+              child: Text(
+                "ありがとう",
+                style: TextStyle(
+                  fontSize: 23,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              margin: EdgeInsets.only(top: 5),
+              child: SvgPicture.asset(
+                "assets/thanks_hands.svg",
+                color: Color(0xFFA5B2C6),
+                height: 100,
+              ),
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.only(
+              top: 15,
+              left: 25,
+              right: 25,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 通報ボタン
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white12,
+                          blurRadius: 30,
+                          offset: Offset(-7, -7),
+                        ),
+                      ],
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF343A41),
+                          Color(0xFF171B20),
+                        ],
+                      )),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.transparent,
+                      shape: CircleBorder(),
+                      elevation: 0,
+                    ),
+                    onPressed: () {},
+                    child: Icon(
+                      Icons.report_rounded,
+                      size: 30,
+                      color: Colors.white54,
+                    ),
+                  ),
+                ),
+                // SizedBox(width: 20),
+                // いいねボタン
+                Container(
+                  height: 60,
+                  width: 60,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white12,
+                          blurRadius: 30,
+                          offset: Offset(-7, -7),
+                        ),
+                      ],
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFF66B84),
+                          Color(0xFFB43148),
+                        ],
+                      )),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.transparent,
+                      shape: CircleBorder(),
+                      elevation: 0,
+                    ),
+                    onPressed: () {},
+                    child: Icon(
+                      Icons.favorite_rounded,
+                      size: 30,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                // SizedBox(width: 20),
+                // OKボタン
+                Container(
+                  height: 60,
+                  width: 160,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(60),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white12,
+                          blurRadius: 30,
+                          offset: Offset(-7, -7),
+                        ),
+                      ],
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF1DA1EB),
+                          Color(0xFF0A5A86),
+                        ],
+                      )),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.transparent,
+                      shape: StadiumBorder(),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      "OK",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      _hideMessageSheet();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // メッセージの位置を上に変更（表示）
+  void _showMessageSheet() {
+    setState(() {
+      _carColor = Colors.red[300]!;
+      _currentSheetTop = 440;
+    });
+  }
+
+  // メッセージの位置を下に変更（隠す）
+  void _hideMessageSheet() {
+    setState(() {
+      _carColor = Colors.white.withOpacity(0.2);
+      _currentSheetTop = _defaultSheetTop;
     });
   }
 
