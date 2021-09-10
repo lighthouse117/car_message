@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:car_message/sendMessagePage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -88,12 +89,13 @@ class _MainPageState extends State<MainPage> {
                   height: deviceHeight,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFF353A40),
-                          Color(0xFF202326),
-                        ]),
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color(0xFF353A40),
+                        Color(0xFF202326),
+                      ],
+                    ),
                   ),
                 ),
                 // 速度
@@ -230,52 +232,113 @@ class _MainPageState extends State<MainPage> {
                     height: 120,
                   ),
                 ),
+                // 前の車
                 Positioned(
                   top: 110,
-                  child: SvgPicture.asset(
-                    "assets/car-top.svg",
-                    color: Colors.white.withOpacity(0.2),
-                    height: 90,
-                  ),
-                ),
-                Positioned(
-                  top: 335,
-                  child: SvgPicture.asset(
-                    "assets/car-top.svg",
-                    color: Colors.white.withOpacity(0.2),
-                    height: 90,
-                  ),
-                ),
-                Positioned(
-                  top: 220,
-                  left: 50,
-                  child: SvgPicture.asset(
-                    "assets/car-top.svg",
-                    color: Colors.white.withOpacity(0.2),
-                    height: 90,
-                  ),
-                ),
-                Positioned(
-                  top: 220,
-                  right: 50,
-                  child: SvgPicture.asset(
-                    "assets/car-top.svg",
-                    color: Colors.white.withOpacity(0.2),
-                    height: 90,
-                  ),
-                ),
-                Positioned(
-                  top: 135,
-                  right: -5,
-                  child: RotatedBox(
-                    quarterTurns: 2,
+                  child: GestureDetector(
                     child: SvgPicture.asset(
                       "assets/car-top.svg",
                       color: Colors.white.withOpacity(0.2),
                       height: 90,
                     ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return SendMessagePage();
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
+                // 後ろの車
+                Positioned(
+                  top: 335,
+                  child: GestureDetector(
+                    child: SvgPicture.asset(
+                      "assets/car-top.svg",
+                      color: Colors.white.withOpacity(0.2),
+                      height: 90,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return SendMessagePage();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // 左の車
+                Positioned(
+                  top: 220,
+                  left: 50,
+                  child: GestureDetector(
+                    child: SvgPicture.asset(
+                      "assets/car-top.svg",
+                      color: Colors.white.withOpacity(0.2),
+                      height: 90,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return SendMessagePage();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // 右の車
+                Positioned(
+                  top: 220,
+                  right: 50,
+                  child: GestureDetector(
+                    child: SvgPicture.asset(
+                      "assets/car-top.svg",
+                      color: Colors.white.withOpacity(0.2),
+                      height: 90,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return SendMessagePage();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // 対向車線の車
+                Positioned(
+                  top: 135,
+                  right: -5,
+                  child: RotatedBox(
+                    quarterTurns: 2,
+                    child: GestureDetector(
+                      child: SvgPicture.asset(
+                        "assets/car-top.svg",
+                        color: Colors.white.withOpacity(0.2),
+                        height: 90,
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return SendMessagePage();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                // 車線
                 Positioned(
                   top: 110,
                   left: 130,
@@ -326,26 +389,190 @@ class _MainPageState extends State<MainPage> {
                     ],
                   ),
                 ),
-                // 位置情報を送信するボタン
-                // Positioned(
-                //   top: 260,
-                //   child: Container(
-                //     child: ElevatedButton(
-                //       child: Text("位置情報を送信"),
-                //       onPressed: sendMyLocation, // 押されたときに実行
-                //     ),
-                //   ),
-                // ),
-                // Positioned(
-                //   top: 300,
-                //   child: Container(
-                //     child: ElevatedButton(
-                //         child: Text("リセット"),
-                //         onPressed: () {
-                //           setState(() {});
-                //         }),
-                //   ),
-                // ),
+                Positioned(
+                  top: 440,
+                  child: Container(
+                    height: deviceHeight - 440 + 10,
+                    width: deviceWidth,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(50),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF414954),
+                          Color(0xFF202326),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Color(0xFF47515B),
+                        width: 3,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          alignment: Alignment.centerLeft,
+                          margin: EdgeInsets.only(top: 15, left: 30),
+                          child: Text(
+                            "前の車からのメッセージ",
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.white54,
+                            ),
+                          ),
+                        ),
+                        Center(
+                          child: Container(
+                            margin: EdgeInsets.only(top: 10),
+                            child: Text(
+                              "ありがとう",
+                              style: TextStyle(
+                                fontSize: 23,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Center(
+                          child: Container(
+                            margin: EdgeInsets.only(top: 15),
+                            child: SvgPicture.asset(
+                              "assets/thanks_hands.svg",
+                              color: Color(0xFFA5B2C6),
+                              height: 100,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(
+                            top: 25,
+                            left: 25,
+                            right: 25,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // 通報ボタン
+                              Container(
+                                height: 60,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white12,
+                                        blurRadius: 30,
+                                        offset: Offset(-7, -7),
+                                      ),
+                                    ],
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF343A41),
+                                        Color(0xFF171B20),
+                                      ],
+                                    )),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Colors.transparent,
+                                    shape: CircleBorder(),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {},
+                                  child: Icon(
+                                    Icons.report_rounded,
+                                    size: 30,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
+                              // SizedBox(width: 20),
+                              // いいねボタン
+                              Container(
+                                height: 60,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white12,
+                                        blurRadius: 30,
+                                        offset: Offset(-7, -7),
+                                      ),
+                                    ],
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFF66B84),
+                                        Color(0xFFB43148),
+                                      ],
+                                    )),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Colors.transparent,
+                                    shape: CircleBorder(),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {},
+                                  child: Icon(
+                                    Icons.favorite_rounded,
+                                    size: 30,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              // SizedBox(width: 20),
+                              // OKボタン
+                              Container(
+                                height: 60,
+                                width: 160,
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(60),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white12,
+                                        blurRadius: 30,
+                                        offset: Offset(-7, -7),
+                                      ),
+                                    ],
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color(0xFF1DA1EB),
+                                        Color(0xFF0A5A86),
+                                      ],
+                                    )),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Colors.transparent,
+                                    shape: CircleBorder(),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {},
+                                  child: Text(
+                                    "OK",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               ],
             );
           },
