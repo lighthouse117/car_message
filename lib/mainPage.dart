@@ -9,6 +9,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:device_info/device_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -16,19 +17,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  // Firebaseからのストリーム
-  late Stream<QuerySnapshot> _testStream;
+  late Stream<QuerySnapshot> _testStream; // Firebaseからのストリーム
 
-  double currentLat = 0;
-  double currentLng = 0;
-  double currentSpeed = 0;
+  double currentLat = 0; // 現在の緯度
+  double currentLng = 0; // 現在の経度
+  double currentSpeed = 0; // 現在の速度
 
-  late String myUniqueID; //　固有ID
+  late String myUniqueID; //　デバイスの固有ID
 
-  String testText = "57";
+  List newMessages = []; // 新規メッセージのリスト
 
-  List newMessages = [];
-
+// 最初に一度だけ実行される初期化処理
   @override
   void initState() {
     super.initState();
@@ -54,250 +53,302 @@ class _MainPageState extends State<MainPage> {
 
     final double deviceWidth = MediaQuery.of(context).size.width; // デバイスの幅
     final double deviceHeight = MediaQuery.of(context).size.height; // デバイスの高さ
+    final double topPadding = MediaQuery.of(context).padding.top; // 上の余白
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          // Firebaseのデータが更新されるたびに再描画される
-          child: StreamBuilder(
-            stream: _testStream,
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                return Text("エラーが発生しました。");
-              }
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              }
-              // 変更されたメッセージを取得（新規追加含む）
-              newMessages = snapshot.data!.docChanges.map((change) {
-                // ドキュメントIDも含めてマップにしてリストに格納
-                Map data = change.doc.data() as Map;
-                data["docId"] = change.doc.id;
-                return data;
-              }).toList();
+      body: Center(
+        // Firebaseのデータが更新されるたびに再描画される
+        child: StreamBuilder(
+          stream: _testStream,
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasError) {
+              return Text("エラーが発生しました。");
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            }
+            // 変更されたメッセージを取得（新規追加含む）
+            newMessages = snapshot.data!.docChanges.map((change) {
+              // ドキュメントIDも含めてマップにしてリストに格納
+              Map data = change.doc.data() as Map;
+              data["docId"] = change.doc.id;
+              return data;
+            }).toList();
 
-              // 新規メッセージをダイアログで表示
-              showMessage();
+            // 新規メッセージをダイアログで表示
+            showMessage();
 
-              return Stack(
-                alignment: Alignment.topCenter,
-                children: <Widget>[
-                  Container(
-                    width: deviceWidth,
-                    height: deviceHeight,
+            return Stack(
+              alignment: Alignment.topCenter,
+              children: <Widget>[
+                // 背景のグラデーション
+                Container(
+                  width: deviceWidth,
+                  height: deviceHeight,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF353A40),
+                          Color(0xFF202326),
+                        ]),
                   ),
-                  Positioned(
-                    top: 15,
-                    child: Column(
-                      children: [
-                        Container(
-                          child: Text(
-                            currentSpeed.toStringAsFixed(6),
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w500,
-                            ),
+                ),
+                // 速度
+                Positioned(
+                  top: topPadding,
+                  child: Column(
+                    children: [
+                      Container(
+                        child: Text(
+                          // currentSpeed.toStringAsFixed(6),
+                          "56",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 1.8,
                           ),
                         ),
-                        Container(
-                          child: Text(
-                            "m/h",
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                        // Text(lat.toString()),
-                        // Text(lng.toString()),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 70,
-                    left: 15,
-                    child: Column(
-                      children: [
-                        Text(
-                          "現在地",
+                      ),
+                      Container(
+                        child: Text(
+                          "km/h",
                           style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        Text(
-                          "緯度 " + currentLat.toString(),
-                          style: TextStyle(
+                            color: Colors.grey[600],
                             fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.0,
                           ),
                         ),
-                        Text(
-                          "経度 " + currentLng.toString(),
-                          style: TextStyle(
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 110,
-                    child: Container(
-                      child: Image.asset(
-                        'assets/mycar.png',
-                        height: 140,
+                ),
+                // ブロードキャストボタン
+                Positioned(
+                  top: 70,
+                  left: 40,
+                  child: Container(
+                    height: 60,
+                    width: 60,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white12,
+                            blurRadius: 30,
+                            offset: Offset(-7, -7),
+                          ),
+                        ],
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF343A41),
+                            Color(0xFF171B20),
+                          ],
+                        )),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.transparent,
+                        shape: CircleBorder(),
+                        elevation: 0,
+                      ),
+                      onPressed: () {},
+                      child: SvgPicture.asset(
+                        "assets/broadcast.svg",
+                        color: Colors.white70,
+                        height: 100,
+                        width: 100,
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 120,
-                    right: 30,
+                ),
+                // 音声入力ボタン
+                Positioned(
+                  top: 70,
+                  right: 40,
+                  child: Container(
+                    height: 60,
+                    width: 60,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white12,
+                            blurRadius: 30,
+                            offset: Offset(-7, -7),
+                          ),
+                        ],
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF343A41),
+                            Color(0xFF171B20),
+                          ],
+                        )),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.transparent,
+                        shape: CircleBorder(),
+                        elevation: 0,
+                      ),
+                      onPressed: () {},
+                      child: Icon(
+                        Icons.mic_rounded,
+                        size: 30,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                ),
+                // 自分の車
+                Positioned(
+                  top: 190,
+                  child: Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.white10,
+                            blurRadius: 50,
+                            spreadRadius: 0),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 205,
+                  child: Image.asset(
+                    'assets/mycar.png',
+                    height: 120,
+                  ),
+                ),
+                Positioned(
+                  top: 110,
+                  child: SvgPicture.asset(
+                    "assets/car-top.svg",
+                    color: Colors.white.withOpacity(0.2),
+                    height: 90,
+                  ),
+                ),
+                Positioned(
+                  top: 335,
+                  child: SvgPicture.asset(
+                    "assets/car-top.svg",
+                    color: Colors.white.withOpacity(0.2),
+                    height: 90,
+                  ),
+                ),
+                Positioned(
+                  top: 220,
+                  left: 50,
+                  child: SvgPicture.asset(
+                    "assets/car-top.svg",
+                    color: Colors.white.withOpacity(0.2),
+                    height: 90,
+                  ),
+                ),
+                Positioned(
+                  top: 220,
+                  right: 50,
+                  child: SvgPicture.asset(
+                    "assets/car-top.svg",
+                    color: Colors.white.withOpacity(0.2),
+                    height: 90,
+                  ),
+                ),
+                Positioned(
+                  top: 135,
+                  right: -5,
+                  child: RotatedBox(
+                    quarterTurns: 2,
                     child: SvgPicture.asset(
                       "assets/car-top.svg",
                       color: Colors.white.withOpacity(0.2),
-                      height: 100,
+                      height: 90,
                     ),
                   ),
-                  // 位置情報を送信するボタン
-                  Positioned(
-                    top: 260,
-                    child: Container(
-                      child: ElevatedButton(
-                        child: Text("位置情報を送信"),
-                        onPressed: sendMyLocation, // 押されたときに実行
+                ),
+                Positioned(
+                  top: 110,
+                  left: 130,
+                  child: Column(
+                    children: [
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 300,
-                    child: Container(
-                      child: ElevatedButton(
-                          child: Text("リセット"),
-                          onPressed: () {
-                            setState(() {
-                              testText = "リセット";
-                            });
-                          }),
-                    ),
-                  ),
-                  Positioned(
-                    top: 360,
-                    // Firebaseのデータが更新されるたび再描画される
-                    child: Container(
-                      color: Colors.grey[800],
-                      width: deviceWidth,
-                      height: 400,
-
-                      // メッセージをリストで表示
-                      child: ListView.builder(
-                        physics: BouncingScrollPhysics(),
-                        padding: EdgeInsets.only(top: 10, bottom: 50),
-                        itemCount: newMessages.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          // １つ１つのメッセージを取り出す
-                          var message = newMessages[index];
-                          // 固有IDで自分のメッセージかを判断
-                          bool isMyMessage = message["uid"] == myUniqueID;
-
-                          return Container(
-                            margin: EdgeInsets.only(
-                              left: 20,
-                              right: 20,
-                              bottom: 15,
-                            ),
-                            height: 90,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: isMyMessage
-                                  ? Colors.orange[200]!.withOpacity(0.3)
-                                  : Colors.grey[700],
-                            ),
-                            child: Container(
-                              margin: EdgeInsets.only(
-                                top: 10,
-                                bottom: 10,
-                                left: 10,
-                              ),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "送信日時：",
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                      Text(
-                                        DateFormat('M月d日 HH:mm')
-                                            .format(message["sentAt"].toDate()),
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[300],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "緯度経度：",
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                      Text(
-                                        message["latLng"]
-                                                .latitude
-                                                .toStringAsFixed(4) +
-                                            ",  " +
-                                            message["latLng"]
-                                                .longitude
-                                                .toStringAsFixed(4),
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[300],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        "エリア：",
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[500],
-                                        ),
-                                      ),
-                                      Text(
-                                        message["area"],
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey[300],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                      SizedBox(height: 25),
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
                       ),
-                    ),
+                      SizedBox(height: 25),
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
-          ),
+                ),
+                Positioned(
+                  top: 110,
+                  right: 130,
+                  child: Column(
+                    children: [
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
+                      ),
+                      SizedBox(height: 25),
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
+                      ),
+                      SizedBox(height: 25),
+                      Container(
+                        color: Colors.white12,
+                        height: 90,
+                        width: 1.5,
+                      ),
+                    ],
+                  ),
+                ),
+                // 位置情報を送信するボタン
+                // Positioned(
+                //   top: 260,
+                //   child: Container(
+                //     child: ElevatedButton(
+                //       child: Text("位置情報を送信"),
+                //       onPressed: sendMyLocation, // 押されたときに実行
+                //     ),
+                //   ),
+                // ),
+                // Positioned(
+                //   top: 300,
+                //   child: Container(
+                //     child: ElevatedButton(
+                //         child: Text("リセット"),
+                //         onPressed: () {
+                //           setState(() {});
+                //         }),
+                //   ),
+                // ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -329,9 +380,6 @@ class _MainPageState extends State<MainPage> {
   void sendMyLocation() async {
     // 現在時刻
     var now = DateTime.now();
-
-    // 現在地を取得
-    // Position currentPos = await getCurrentPosition();
 
     // 緯度経度から住所を取得
     Placemark placemark = await getAddressFromLatLng(currentLat, currentLng);
@@ -419,15 +467,114 @@ class _MainPageState extends State<MainPage> {
 
     // 現在地を常に取得するストリーム
     StreamSubscription postionStream = Geolocator.getPositionStream(
-            desiredAccuracy: LocationAccuracy.bestForNavigation,
-            distanceFilter: 1)
-        .listen((Position position) {
+      desiredAccuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 1,
+    ).listen((Position position) {
       // 現在地に変更があると実行される
       setState(() {
-        currentLat = position.latitude;
-        currentLng = position.longitude;
-        currentSpeed = position.speed;
+        currentLat = position.latitude; // 緯度を更新
+        currentLng = position.longitude; // 経度を更新
+        currentSpeed = position.speed; // 速度を更新 (m/s)
       });
     });
   }
+
+  // Widget buildListView() {
+  //   // メッセージをリストで表示
+  //   return ListView.builder(
+  //     physics: BouncingScrollPhysics(),
+  //     padding: EdgeInsets.only(top: 10, bottom: 50),
+  //     itemCount: newMessages.length,
+  //     itemBuilder: (BuildContext context, int index) {
+  //       // １つ１つのメッセージを取り出す
+  //       var message = newMessages[index];
+  //       // 固有IDで自分のメッセージかを判断
+  //       bool isMyMessage = message["uid"] == myUniqueID;
+
+  //       return Container(
+  //         margin: EdgeInsets.only(
+  //           left: 20,
+  //           right: 20,
+  //           bottom: 15,
+  //         ),
+  //         height: 90,
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(10),
+  //           color: isMyMessage
+  //               ? Colors.orange[200]!.withOpacity(0.3)
+  //               : Colors.grey[700],
+  //         ),
+  //         child: Container(
+  //           margin: EdgeInsets.only(
+  //             top: 10,
+  //             bottom: 10,
+  //             left: 10,
+  //           ),
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Text(
+  //                     "送信日時：",
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[500],
+  //                     ),
+  //                   ),
+  //                   Text(
+  //                     DateFormat('M月d日 HH:mm')
+  //                         .format(message["sentAt"].toDate()),
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[300],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               Row(
+  //                 children: [
+  //                   Text(
+  //                     "緯度経度：",
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[500],
+  //                     ),
+  //                   ),
+  //                   Text(
+  //                     message["latLng"].latitude.toStringAsFixed(4) +
+  //                         ",  " +
+  //                         message["latLng"].longitude.toStringAsFixed(4),
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[300],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               Row(
+  //                 children: [
+  //                   Text(
+  //                     "エリア：",
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[500],
+  //                     ),
+  //                   ),
+  //                   Text(
+  //                     message["area"],
+  //                     style: TextStyle(
+  //                       fontSize: 15,
+  //                       color: Colors.grey[300],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 }
