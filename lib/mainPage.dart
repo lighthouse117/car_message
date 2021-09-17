@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:car_message/mainPage.dart';
 import 'package:car_message/sendMessagePage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,19 +31,23 @@ class _MainPageState extends State<MainPage> {
 
   double _sheetHeight = 0; // バナーの高さ
   double _defaultSheetTop = 900; // バナーの隠す位置
-  double _currentSheetTop = 0; // バナーの現在位置
+  double _currentMessageSheetTop = 0; // 受信バナーの現在位置
+  double _currentSentSheetTop = 0; // 送信完了バナーの現在位置
 
   String messageText = "";
   String messageDistance = "";
 
-  Color _carColor = Colors.white.withOpacity(0.2);
+  String sentMessage = "";
+
+  Color _frontCarColor = Colors.white.withOpacity(0.2);
+  Color _rightCarColor = Colors.white.withOpacity(0.2);
 
 // 最初に一度だけ実行される初期化処理
   @override
   void initState() {
     super.initState();
     getLocationUpdates(); // 現在地情報を常に取得する
-    getUqniqueID(); // デバイスごとの固有IDを取得
+    getUniqueID(); // デバイスごとの固有IDを取得
     var initialTime = DateTime.now(); // アプリ起動時の時刻
 
     // Firebaseからのストリーム
@@ -53,7 +58,8 @@ class _MainPageState extends State<MainPage> {
         .orderBy("sentAt", descending: true)
         .snapshots();
 
-    _currentSheetTop = _defaultSheetTop;
+    _currentMessageSheetTop = _defaultSheetTop;
+    _currentSentSheetTop = _defaultSheetTop;
     // Future.delayed(Duration(milliseconds: 1000), _showMessageSheet);
   }
 
@@ -120,8 +126,8 @@ class _MainPageState extends State<MainPage> {
                     children: [
                       Container(
                         child: Text(
-                          (currentSpeed * 3.6).round().toString(),
-                          // "56",
+                          // (currentSpeed * 3.6).round().toString(),
+                          "56",
                           style: GoogleFonts.montserrat(
                             fontSize: 40,
                             fontWeight: FontWeight.w400,
@@ -253,7 +259,7 @@ class _MainPageState extends State<MainPage> {
                   child: GestureDetector(
                     child: SvgPicture.asset(
                       "assets/car-top.svg",
-                      color: _carColor,
+                      color: _frontCarColor,
                       height: 90,
                     ),
                     onTap: () {
@@ -315,7 +321,7 @@ class _MainPageState extends State<MainPage> {
                   child: GestureDetector(
                     child: SvgPicture.asset(
                       "assets/car-top.svg",
-                      color: Colors.white.withOpacity(0.2),
+                      color: _rightCarColor,
                       height: 90,
                     ),
                     onTap: () {
@@ -325,7 +331,13 @@ class _MainPageState extends State<MainPage> {
                             return SendMessagePage();
                           },
                         ),
-                      );
+                      ).then((message) {
+                        if (message != null) {
+                          sentMessage = message;
+                          _showSentSheet();
+                        }
+                        ;
+                      });
                     },
                   ),
                 ),
@@ -341,16 +353,7 @@ class _MainPageState extends State<MainPage> {
                         color: Colors.white.withOpacity(0.2),
                         height: 90,
                       ),
-                      onTap: () {
-                        // Navigator.of(context).push(
-                        //   MaterialPageRoute(
-                        //     builder: (context) {
-                        //       return SendMessagePage();
-                        //     },
-                        //   ),
-                        // );
-                        sendMyLocation();
-                      },
+                      onTap: () {},
                     ),
                   ),
                 ),
@@ -407,10 +410,17 @@ class _MainPageState extends State<MainPage> {
                 ),
                 // 受信したメッセージを下部に表示
                 AnimatedPositioned(
-                  top: _currentSheetTop,
+                  top: _currentMessageSheetTop,
                   duration: Duration(milliseconds: 800),
                   curve: Curves.easeInOut,
                   child: buildMessageSheet(deviceHeight, deviceWidth),
+                ),
+                // 送信完了画面
+                AnimatedPositioned(
+                  top: _currentSentSheetTop,
+                  duration: Duration(milliseconds: 800),
+                  curve: Curves.easeInOut,
+                  child: buildSentSheet(deviceHeight, deviceWidth),
                 ),
               ],
             );
@@ -428,7 +438,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   // デバイスの固有IDを取得
-  Future<void> getUqniqueID() async {
+  Future<void> getUniqueID() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     String id = "";
 
@@ -480,6 +490,7 @@ class _MainPageState extends State<MainPage> {
             lat, lng, message['latLng'].latitude, message['latLng'].longitude);
 
         messageDistance = distanceFromHere.toStringAsFixed(2);
+        messageText = message['message'];
 
         Future.delayed(Duration.zero, () {
           // showDialog(
@@ -552,7 +563,7 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  // 下部に表示されるメッセージ
+  // 受信メッセージ
   Widget buildMessageSheet(double deviceHeight, double deviceWidth) {
     return Container(
       height: _sheetHeight,
@@ -603,7 +614,7 @@ class _MainPageState extends State<MainPage> {
             child: Container(
               margin: EdgeInsets.only(top: 5),
               child: Text(
-                "ありがとう",
+                messageText,
                 style: TextStyle(
                   fontSize: 23,
                   color: Colors.white,
@@ -614,17 +625,13 @@ class _MainPageState extends State<MainPage> {
           ),
           Center(
             child: Container(
-              margin: EdgeInsets.only(top: 5),
-              child: SvgPicture.asset(
-                "assets/thanks_hands.svg",
-                color: Color(0xFFA5B2C6),
-                height: 100,
-              ),
+              margin: EdgeInsets.only(top: 15),
+              child: getMessageIcon(messageText, 90),
             ),
           ),
           Container(
             margin: EdgeInsets.only(
-              top: 20,
+              top: 30,
               left: 25,
               right: 25,
             ),
@@ -751,19 +758,148 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  // メッセージの位置を上に変更（表示）
+  // 受信メッセージの位置を上に変更（表示）
   void _showMessageSheet() {
     setState(() {
-      _carColor = Colors.red[300]!;
-      _currentSheetTop = 440;
+      _frontCarColor = Colors.red[300]!;
+      _currentMessageSheetTop = 440;
     });
   }
 
-  // メッセージの位置を下に変更（隠す）
+  // 受信メッセージの位置を下に変更（隠す）
   void _hideMessageSheet() {
     setState(() {
-      _carColor = Colors.white.withOpacity(0.2);
-      _currentSheetTop = _defaultSheetTop;
+      _frontCarColor = Colors.white.withOpacity(0.2);
+      _currentMessageSheetTop = _defaultSheetTop;
+    });
+  }
+
+  // 送信完了メッセージ
+  Widget buildSentSheet(double deviceHeight, double deviceWidth) {
+    return Container(
+      height: _sheetHeight,
+      width: deviceWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(50),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF414954),
+            Color(0xFF202326),
+          ],
+        ),
+        border: Border.all(
+          color: Color(0xFF47515B),
+          width: 3,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.only(top: 15, left: 30),
+            child: Text(
+              "右の車へのメッセージ",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+          Container(
+            alignment: Alignment.centerLeft,
+            margin: EdgeInsets.only(left: 30, top: 5),
+            child: Text(
+              sentMessage,
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              margin: EdgeInsets.only(top: 15),
+              child: Text(
+                "送信完了",
+                style: TextStyle(
+                  fontSize: 25,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Icon(
+            Icons.check_circle_rounded,
+            size: 77,
+            color: Color(0xFF57D281),
+          ),
+          Container(
+            margin: EdgeInsets.only(top: 30),
+            height: 55,
+            width: 200,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(60),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white12,
+                    blurRadius: 30,
+                    offset: Offset(-7, -7),
+                  ),
+                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF1DA1EB),
+                    Color(0xFF0A5A86),
+                  ],
+                )),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                primary: Colors.transparent,
+                shape: StadiumBorder(),
+                elevation: 0,
+              ),
+              child: Text(
+                "OK",
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                _hideSentSheet();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 受信メッセージの位置を上に変更（表示）
+  void _showSentSheet() {
+    setState(() {
+      _rightCarColor = Colors.lightBlue[200]!;
+      _currentSentSheetTop = 440;
+    });
+  }
+
+  // 受信メッセージの位置を下に変更（隠す）
+  void _hideSentSheet() {
+    setState(() {
+      _rightCarColor = Colors.white.withOpacity(0.2);
+      _currentSentSheetTop = _defaultSheetTop;
     });
   }
 
@@ -865,4 +1001,103 @@ class _MainPageState extends State<MainPage> {
   //     },
   //   );
   // }
+}
+
+Widget getMessageIcon(String title, double size) {
+  Widget messageImage = Container();
+  switch (title) {
+    case "ありがとう":
+      messageImage = SvgPicture.asset(
+        "assets/thanks_hands.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "緊急車両が接近":
+      messageImage = SvgPicture.asset(
+        "assets/car-emergency.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "お先にどうぞ":
+      messageImage = SvgPicture.asset(
+        "assets/goahead.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "ライトつけて":
+      messageImage = SvgPicture.asset(
+        "assets/car-light.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "ごめんね":
+      messageImage = SvgPicture.asset(
+        "assets/thanks_hands.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "あぶない！":
+      messageImage = SvgPicture.asset(
+        "assets/sad-face.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "ライトまぶしい":
+      messageImage = SvgPicture.asset(
+        "assets/car-light-high.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "ドアが開いてる":
+      messageImage = SvgPicture.asset(
+        "assets/car-door.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "エンスト":
+      messageImage = SvgPicture.asset(
+        "assets/car-manual.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "事故発生":
+      messageImage = SvgPicture.asset(
+        "assets/car-crash.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "停車中の車あり":
+      messageImage = SvgPicture.asset(
+        "assets/car-accident.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+    case "急病人":
+      messageImage = SvgPicture.asset(
+        "assets/sick-face.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+      break;
+
+    default:
+      messageImage = SvgPicture.asset(
+        "assets/sad-face.svg",
+        color: Color(0xFFA5B2C6),
+        height: size,
+      );
+  }
+
+  return messageImage;
 }

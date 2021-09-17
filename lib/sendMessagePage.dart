@@ -1,15 +1,8 @@
-import 'dart:async';
-import 'dart:io';
+import 'package:car_message/confirmSendMessagePage.dart';
+import 'package:car_message/mainPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:device_info/device_info.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SendMessagePage extends StatefulWidget {
   @override
@@ -158,52 +151,69 @@ class _SendMessagePageState extends State<SendMessagePage>
               ),
             ),
             SizedBox(
-              height: 20,
+              height: 25,
             ),
-            TabBar(
-              controller: _tabController,
-              indicatorColor: Colors.lightBlue[100],
-              labelPadding: EdgeInsets.only(bottom: 10),
-              tabs: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.emoji_emotions_rounded,
-                      size: 20,
+            Stack(
+              children: [
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.white12,
+                          width: 1.5,
+                        ),
+                      ),
                     ),
-                    SizedBox(width: 5),
-                    Text(
-                      "感情",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
+                  ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.construction_rounded,
-                      size: 20,
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: Colors.lightBlue[100],
+                  labelPadding: EdgeInsets.only(bottom: 10),
+                  indicatorWeight: 1.5,
+                  tabs: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.emoji_emotions_rounded,
+                          size: 20,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          "感情",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 5),
-                    Text(
-                      "整備",
-                      style: TextStyle(fontSize: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.construction_rounded,
+                          size: 20,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          "整備",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.report_problem_rounded,
-                      size: 20,
-                    ),
-                    SizedBox(width: 5),
-                    Text(
-                      "事故",
-                      style: TextStyle(fontSize: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.report_problem_rounded,
+                          size: 20,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          "事故",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -227,52 +237,6 @@ class _SendMessagePageState extends State<SendMessagePage>
   }
 
   Widget buildMessageButton(String title) {
-    Widget messageImage = Container();
-    switch (title) {
-      case "ありがとう":
-        messageImage = SvgPicture.asset(
-          "assets/thanks_hands.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      case "緊急車両が接近":
-        messageImage = SvgPicture.asset(
-          "assets/car-emergency.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      case "お先にどうぞ":
-        messageImage = SvgPicture.asset(
-          "assets/goahead.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      case "ライトつけて":
-        messageImage = SvgPicture.asset(
-          "assets/car-light.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      case "ごめんね":
-        messageImage = SvgPicture.asset(
-          "assets/thanks_hands.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      case "あぶない！":
-        messageImage = SvgPicture.asset(
-          "assets/sad-face.svg",
-          color: Color(0xFFA5B2C6),
-          height: 40,
-        );
-        break;
-      default:
-    }
     return Material(
       borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
@@ -284,7 +248,7 @@ class _SendMessagePageState extends State<SendMessagePage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              messageImage,
+              getMessageIcon(title, 40),
               Text(
                 title,
                 style: TextStyle(
@@ -296,21 +260,98 @@ class _SendMessagePageState extends State<SendMessagePage>
           ),
         ),
         onTap: () {
-          Navigator.pop(context);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) {
+                return ConfirmSendMessagePage(title);
+              },
+            ),
+          ).then((message) {
+            if (message != null) Navigator.of(context).pop(message);
+          });
         },
       ),
     );
   }
 
   Widget emotionTab() {
-    return Container();
+    return Container(
+      margin: EdgeInsets.only(left: 25, top: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              buildMessageButton("ありがとう"),
+              SizedBox(width: 25),
+              buildMessageButton("ごめんね"),
+            ],
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          Row(
+            children: [
+              buildMessageButton("お先にどうぞ"),
+              SizedBox(width: 25),
+              buildMessageButton("あぶない！"),
+            ],
+          )
+        ],
+      ),
+    );
   }
 
   Widget maintenanceTab() {
-    return Container();
+    return Container(
+      margin: EdgeInsets.only(left: 25, top: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              buildMessageButton("ライトつけて"),
+              SizedBox(width: 25),
+              buildMessageButton("ライトまぶしい"),
+            ],
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          Row(
+            children: [
+              buildMessageButton("ドアが開いてる"),
+              SizedBox(width: 25),
+              buildMessageButton("エンスト"),
+            ],
+          )
+        ],
+      ),
+    );
   }
 
   Widget accidentTab() {
-    return Container();
+    return Container(
+      margin: EdgeInsets.only(left: 25, top: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              buildMessageButton("事故発生"),
+              SizedBox(width: 25),
+              buildMessageButton("停車中の車あり"),
+            ],
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          Row(
+            children: [
+              buildMessageButton("急病人"),
+              SizedBox(width: 25),
+              buildMessageButton("緊急車両が接近"),
+            ],
+          )
+        ],
+      ),
+    );
   }
 }
