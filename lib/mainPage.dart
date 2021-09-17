@@ -120,7 +120,7 @@ class _MainPageState extends State<MainPage> {
                     children: [
                       Container(
                         child: Text(
-                          currentSpeed.toStringAsFixed(4),
+                          (currentSpeed * 3.6).round().toString(),
                           // "56",
                           style: GoogleFonts.montserrat(
                             fontSize: 40,
@@ -131,8 +131,7 @@ class _MainPageState extends State<MainPage> {
                       ),
                       Container(
                         child: Text(
-                          "m/s",
-                          // "km/h",
+                          "km/h",
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
@@ -480,7 +479,6 @@ class _MainPageState extends State<MainPage> {
         double distanceFromHere = Geolocator.distanceBetween(
             lat, lng, message['latLng'].latitude, message['latLng'].longitude);
 
-        messageText = message["docId"];
         messageDistance = distanceFromHere.toStringAsFixed(2);
 
         Future.delayed(Duration.zero, () {
@@ -593,7 +591,7 @@ class _MainPageState extends State<MainPage> {
             alignment: Alignment.centerLeft,
             margin: EdgeInsets.only(left: 30),
             child: Text(
-              messageDistance + "m",
+              messageDistance + " m",
               style: TextStyle(
                 fontSize: 17,
                 color: Colors.white,
@@ -601,20 +599,9 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
           ),
-          Container(
-            alignment: Alignment.centerLeft,
-            margin: EdgeInsets.only(left: 30),
-            child: Text(
-              messageText,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
-            ),
-          ),
           Center(
             child: Container(
-              margin: EdgeInsets.only(top: 10),
+              margin: EdgeInsets.only(top: 5),
               child: Text(
                 "ありがとう",
                 style: TextStyle(
@@ -637,7 +624,7 @@ class _MainPageState extends State<MainPage> {
           ),
           Container(
             margin: EdgeInsets.only(
-              top: 15,
+              top: 20,
               left: 25,
               right: 25,
             ),
